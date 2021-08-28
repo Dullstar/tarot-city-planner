@@ -1,0 +1,15 @@
+{
+	"authors": [
+		"Dullstar"
+	],
+	"copyright": "Copyright © 2021, Dullstar",
+	"dependencies": {
+		"allegro": "~>4.0.4"
+	},
+	"description": "Tarot City Planner: Build a city with the help of your ability to predict and alter the future. olc Code Jam 2021 project.",
+	"license": "MIT",
+	"name": "tarot-city-planner",
+	"libs-linux": ["allegro-5"]
+}
+
+

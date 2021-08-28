@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/tarot-city-planner
+tarot-city-planner.so
+tarot-city-planner.dylib
+tarot-city-planner.dll
+tarot-city-planner.a
+tarot-city-planner.lib
+tarot-city-planner-test-*
+*.exe
+*.o
+*.obj
+*.lst
