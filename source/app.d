@@ -3,6 +3,7 @@ import std.string;
 import allegro5.allegro;
 
 import controller;
+import map_objects;
 
 void initialize(bool test, string what)
 {
