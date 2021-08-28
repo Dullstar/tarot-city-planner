@@ -1,8 +1,11 @@
-module tile;
+module tile.tileset;
+
 import std.stdio;
 import allegro5.allegro;
 import allegro5.allegro_image;
+
 import graphics;
+import tile.tile;
 
 enum tile_names : size_t
 {
@@ -27,27 +30,4 @@ class Tileset
 private:
 	Graphic[] graphics;
 	string intended_filename;
-}
-
-abstract class Tile
-{
-public:
-	@safe @property int x()
-	{
-		return m_x;
-	}
-	@safe @property int y()
-	{
-		return m_y;
-	}
-	@safe @property size_t graphics_index()
-	{
-		return m_graphics_index;
-	}
-private:
-	int m_x;
-	int m_y;
-	size_t m_graphics_index;
-	// int temperature;
-	// int precipitation;
 }
