@@ -9,6 +9,7 @@ enum command {
 	down = 1,
 	left = 2,
 	right = 3,
+	start = 4,
 	none
 }
 
@@ -34,7 +35,7 @@ public:
 				foreach(line; config2)
 				{
 					auto line_contents = line.strip().split(", ");
-					size_t keycode = line_contents[0].to!size_t;
+					int keycode = line_contents[0].to!int;
 				}
 			}
 			catch(Exception e)
@@ -114,7 +115,7 @@ public:
 	}
 	void prep_for_next_frame()
 	{
-		for (size_t i = 0; i < translated_key_held.length; ++i)
+		for (int i = 0; i < translated_key_held.length; ++i)
 		{
 			if (translated_key_released[i])
 		   	{
@@ -143,6 +144,7 @@ private:
 		translation_table[ALLEGRO_KEY_DOWN] = command.down;
 		translation_table[ALLEGRO_KEY_D] = command.right;
 		translation_table[ALLEGRO_KEY_RIGHT] = command.right;
+		translation_table[ALLEGRO_KEY_ENTER] = command.start;
 	}
 	void clear_translation_table()
 	{

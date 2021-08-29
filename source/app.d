@@ -1,9 +1,13 @@
+module app;
+
 import std.stdio;
 import std.string;
 import allegro5.allegro;
+import allegro5.allegro_image;
 
 import controller;
-import map_objects;
+import settings;
+import gameplay;
 
 void initialize(bool test, string what)
 {
@@ -13,12 +17,12 @@ void initialize(bool test, string what)
 	}
 }
 
-class MainGame
+class MainWindow
 {
 public:
 	this(int size_x, int size_y)
 	{
-		display = al_create_display(size_x, size_y);
+		display = al_create_display(size_x * 2, size_y * 2);
 		initialize((display !is null), "display");
 		timer = al_create_timer(1 / 60.0);
 		initialize((timer !is null), "timer");
@@ -33,7 +37,7 @@ public:
 		kb_controller = new KeyboardController("");
 		al_start_timer(timer);
 		// Font.create_fonts();
-		// game_state = new GameState(main_buffer, &kb_controller);
+		current_state = new MainMenu(main_buffer, this);
 	}
 	~this()
 	{
@@ -61,15 +65,15 @@ public:
 				}
 				break;
 			case ALLEGRO_EVENT_KEY_DOWN:
-				writeln("Key down event: ", event.keyboard.keycode);
+				// writeln("Key down event: ", event.keyboard.keycode);
 				kb_controller.interpret_down(event.keyboard.keycode);
 				break;
 			case ALLEGRO_EVENT_KEY_CHAR:
-				writeln("Key char event: ", event.keyboard.keycode);
+				// writeln("Key char event: ", event.keyboard.keycode);
 				kb_controller.interpret_char(event.keyboard.keycode);
 				break;
 			case ALLEGRO_EVENT_KEY_UP:
-				writeln("Key up event: ", event.keyboard.keycode);
+				// writeln("Key up event: ", event.keyboard.keycode);
 				kb_controller.interpret_release(event.keyboard.keycode);
 				break;
 			case ALLEGRO_EVENT_DISPLAY_CLOSE:
@@ -85,16 +89,25 @@ public:
 			}
 		}
 	}
+	void queue_state_change(game_state_type new_state)
+	{
+		next_state = new_state;
+		state_change_queued = true;
+	}
+	// This could be encapsulated a little better, but this will do
+	// for now. It shouldn't be too problematic to change with later
+	// refactoring; the main problem is that we can't make the compiler
+	// enforce using it correctly, but I'm the only one working on this
+	// for now anyway, so it should be okay.
+	KeyboardController kb_controller;
 private:
 	ALLEGRO_TIMER* timer;
 	ALLEGRO_EVENT_QUEUE* queue;
 	ALLEGRO_DISPLAY* display;
 	ALLEGRO_BITMAP* main_buffer;
-	KeyboardController kb_controller;
-	// GameState game_state;
 	void update()
 	{
-		// TEMP
+		/*// TEMP
 		foreach (i, key; kb_controller.pressed)
 		{
 			if (key) writeln("Pressed: ", i);
@@ -111,27 +124,61 @@ private:
 		{
 			if (key) writeln("Released: ", i);
 		}
-		// END TEMP
-		// game_state.update();
+		// END TEMP*/
+		current_state.update();
 		kb_controller.prep_for_next_frame();
+		if (state_change_queued)
+		{
+			writeln("Processing state change...");
+			final switch (next_state)
+			{
+			case game_state_type.main_menu:
+				current_state = new MainMenu(main_buffer, this);
+				break;
+			case game_state_type.main_game:
+				current_state = new MainGame(main_buffer, this);
+				break;
+			}
+			state_change_queued = false;
+		}
 	}
 	void draw()
 	{
 		al_set_target_bitmap(main_buffer);
 		al_clear_to_color(al_map_rgb(0, 0, 0));
-		// game_state.draw();
+		current_state.draw();
 		al_set_target_bitmap(al_get_backbuffer(display));
 		al_draw_bitmap(main_buffer, 0, 0, 0);
+		al_draw_scaled_bitmap
+			(
+				main_buffer,
+				0, 
+				0, 
+				al_get_bitmap_width(main_buffer), 
+				al_get_bitmap_height(main_buffer), 
+				0, 
+				0, 
+				al_get_display_width(display),
+				al_get_display_height(display),
+				0
+			);
 		al_flip_display();
 	}
+
+	// Used for controlling states
+	GameState current_state;
+	game_state_type next_state;
+	bool state_change_queued = false;
 }
 
 int main()
 {
 	return al_run_allegro({
 		initialize(al_init(), "Allegro");
+		initialize(al_init_image_addon(), "Allegro image addon.");
 		initialize(al_install_keyboard(), "keyboard");
-		auto main_game = new MainGame(640, 480);
+		Settings.set_screen_size(320, 240);
+		auto main_game = new MainWindow(320, 240);
 		main_game.run();
 		return 0;
 	});

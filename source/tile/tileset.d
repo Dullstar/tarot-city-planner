@@ -1,13 +1,13 @@
 module tile.tileset;
 
+import std.conv;
 import std.stdio;
 import allegro5.allegro;
 import allegro5.allegro_image;
 
 import graphics;
-import tile.tile;
 
-enum tile_names : size_t
+enum tile_names : int
 {
 	plains = 0,
 	farmland = 1
@@ -23,9 +23,9 @@ class Tileset
 		graphics[tile_names.plains] = new StaticImage("resources/plains.png");
 		graphics[tile_names.farmland] = new StaticImage("resources/farmland.png");
 	}
-	void draw_tile(Tile tile, int scroll_x, int scroll_y)
+	void draw_tile(int tile_graphics_index, int draw_x, int draw_y)
 	{
-		graphics[tile.graphics_index].draw(tile.x - scroll_x, tile.y - scroll_y);
+		graphics[tile_graphics_index].draw(draw_x, draw_y);
 	}
 private:
 	Graphic[] graphics;

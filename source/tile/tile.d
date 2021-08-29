@@ -3,22 +3,28 @@ module tile.tile;
 abstract class Tile
 {
 public:
-	@safe @property int x()
+	this(int x, int y, int graphics_index)
+	{
+		m_x = x;
+		m_y = y;
+		m_graphics_index = graphics_index;
+	}
+	@safe @property int x() const nothrow
 	{
 		return m_x;
 	}
-	@safe @property int y()
+	@safe @property int y() const nothrow
 	{
 		return m_y;
 	}
-	@safe @property size_t graphics_index()
+	@safe @property int graphics_index()
 	{
 		return m_graphics_index;
 	}
 private:
 	int m_x;
 	int m_y;
-	size_t m_graphics_index;
+	int m_graphics_index;
 	// int temperature;
 	// int precipitation;
 }

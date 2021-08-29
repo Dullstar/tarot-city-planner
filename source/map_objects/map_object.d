@@ -3,25 +3,25 @@ module map_objects.map_object;
 abstract class MapObject
 {
 public:
-	abstract @safe @property size_t graphic_index();
+	abstract @safe @property int graphic_index();
 	abstract @safe @property int required_workers();
-	final @safe @property size_t x()
+	final @safe @property int x()
 	{
 		return m_x;
 	}
-	final @safe @property size_t y()
+	final @safe @property int y()
 	{
 		return m_y;
 	}
-	final @safe @property size_t tile_index()
+	final @safe @property int tile_index()
 	{
 		return m_tile_index;
 	}
-	this(size_t x, size_t y, size_t map_width, size_t map_height)
+	this(int x, int y, int map_width, int map_height)
 	{
 		move(x, y, map_width, map_height);
 	}
-	final @safe void move(size_t new_x, size_t new_y, size_t map_width, size_t map_height)
+	final @safe void move(int new_x, int new_y, int map_width, int map_height)
 	in
 	{
 		assert(x < map_width);
@@ -34,7 +34,7 @@ public:
 		m_tile_index = map_width * y + x;
 	}
 private:
-	size_t m_x;
-	size_t m_y;
-	size_t m_tile_index;
+	int m_x;
+	int m_y;
+	int m_tile_index;
 }
