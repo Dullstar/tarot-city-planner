@@ -93,7 +93,15 @@ public:
 		command translated = translation_table[keycode];
 		if (translated == command.none) return;
 		number_keys_held[translated] -= 1;
-		if (number_keys_held[translated] == 0)
+		if (number_keys_held[translated] < 0)
+		{
+			// Intended to prevent switch out problems... doesn't need to be perfect,
+			// just needs to prevent any sort of input lockup. An else if is used for
+			// zero as I don't want to generate new released events if we've already
+			// assumed the key was released.
+			number_keys_held[translated] = 0;
+		}
+		else if (number_keys_held[translated] == 0)
 		{
 			translated_key_released[translated] = true;
 			// Why such complication regarding released keys?
@@ -125,6 +133,14 @@ public:
 		translated_key_downs[] = false;
 		translated_key_released[] = false;
 		translated_key_chars[] = false;
+	}
+	void handle_switch_out()
+	{
+		// Release all keys when this happens.
+		for (int i = 0; i < ALLEGRO_KEY_MAX; ++i)
+		{
+			interpret_release(i);
+		}
 	}
 private:
 	bool[command.max] translated_key_downs;

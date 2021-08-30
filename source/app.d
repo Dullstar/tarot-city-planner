@@ -78,6 +78,9 @@ public:
 				break;
 			case ALLEGRO_EVENT_DISPLAY_CLOSE:
 				return;
+			case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
+				kb_controller.handle_switch_out();
+				break;
 			default:
 				// we can safely ignore any events we don't need to explicitly handle
 				break;
