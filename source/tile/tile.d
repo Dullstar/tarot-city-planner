@@ -1,6 +1,6 @@
 module tile.tile;
 
-abstract class Tile
+class Tile
 {
 public:
 	this(int x, int y, int graphics_index)

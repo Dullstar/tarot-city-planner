@@ -11,6 +11,7 @@ tarot-city-planner.lib
 tarot-city-planner-test-*
 tarot-city-planner.sln
 .vs
+.vscode
 *.exe
 *.o
 *.obj

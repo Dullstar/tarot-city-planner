@@ -20,11 +20,11 @@ do
 		{
 			if (x == 0 || x == size_x - 1 || y == 0 || y == size_y - 1) 
 			{
-				tiles[y * size_x + x] = new Plains(x, y, tile_names.farmland);
+				tiles[y * size_x + x] = new Tile(x, y, tile_names.farmland);
 			}
 			else
 			{
-				tiles[y * size_x + x] = new Plains(x, y, tile_names.plains);
+				tiles[y * size_x + x] = new Tile(x, y, tile_names.plains);
 			}
 		}
 	}

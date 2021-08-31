@@ -4,7 +4,8 @@ import std.conv;
 import std.stdio;
 import std.string;
 
-enum command {
+enum command 
+{
 	up = 0,
 	down = 1,
 	left = 2,
@@ -149,6 +150,42 @@ private:
 	void clear_translation_table()
 	{
 		translation_table[] = command.none;
+	}
+	void write_config(string filename)
+	{
+		auto file = File(filename);
+		foreach(keycode, command; translation_table)
+		{
+			file.writeln(keycode, ": ", command);
+		}
+	}
+	void load_config(string filename, bool ignore_invalid = true)
+	{
+		auto file = File(filename);
+		foreach(line; file.byLine())
+		{
+			try
+			{
+				const auto tmp = line.split(": ");
+				translation_table[tmp[0].to!int] = tmp[1].to!command;
+			}
+			catch (Exception e)
+			{
+				// No, there isn't any missing behavior here: if the line is
+				// Either we want to ignore the invalid entry, in which case
+				// just throw out the line and keep going, or we want to rethrow
+				// Might be able to improve with specific exceptions: I believe
+				// we can get ConvException, ConvOverflowException, and whatever
+				// out of bounds array access is.
+				// Out of bounds handling would ideally be improved, but realistically
+				// the inputs are probably valid anyway unless the user has been
+				// tampering with them.
+				if (!ignore_invalid)
+				{
+					throw e;
+				}
+			}
+		}
 	}
 	command interpret_command_string(string cmd, bool ignore_invalid = true)
 	{
