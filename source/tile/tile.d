@@ -1,5 +1,11 @@
 module tile.tile;
 
+enum tile_names : int
+{
+	plains = 0,
+	farmland = 1
+}
+
 class Tile
 {
 public:

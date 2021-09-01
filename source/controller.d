@@ -3,6 +3,7 @@ import allegro5.allegro;
 import std.conv;
 import std.stdio;
 import std.string;
+import std.file;
 
 enum command 
 {
@@ -28,16 +29,13 @@ class KeyboardController : Controller
 public:
 	this(string config)
 	{
+		// consider removing this conditional, keeping only this branch
+		// rand removing the else branch completely.
 		if (config != "")
 	   	{
 			try
 			{
-				auto config2 = config.strip().split("\n");
-				foreach(line; config2)
-				{
-					auto line_contents = line.strip().split(", ");
-					int keycode = line_contents[0].to!int;
-				}
+				load_config(filename);
 			}
 			catch(Exception e)
 			{
@@ -177,30 +175,39 @@ private:
 	}
 	void load_config(string filename, bool ignore_invalid = true)
 	{
-		auto file = File(filename);
-		foreach(line; file.byLine())
+		// Load/parse the file if it exists, else create it using the defaults.
+		if (exists(filename))
 		{
-			try
+			auto file = File(filename);
+			foreach(line; file.byLine())
 			{
-				const auto tmp = line.split(": ");
-				translation_table[tmp[0].to!int] = tmp[1].to!command;
-			}
-			catch (Exception e)
-			{
-				// No, there isn't any missing behavior here: if the line is
-				// Either we want to ignore the invalid entry, in which case
-				// just throw out the line and keep going, or we want to rethrow
-				// Might be able to improve with specific exceptions: I believe
-				// we can get ConvException, ConvOverflowException, and whatever
-				// out of bounds array access is.
-				// Out of bounds handling would ideally be improved, but realistically
-				// the inputs are probably valid anyway unless the user has been
-				// tampering with them.
-				if (!ignore_invalid)
+				try
 				{
-					throw e;
+					const auto tmp = line.split(": ");
+					translation_table[tmp[0].to!int] = tmp[1].to!command;
+				}
+				catch (Exception e)
+				{
+					// No, there isn't any missing behavior here: if the line is
+					// Either we want to ignore the invalid entry, in which case
+					// just throw out the line and keep going, or we want to rethrow
+					// Might be able to improve with specific exceptions: I believe
+					// we can get ConvException, ConvOverflowException, and whatever
+					// out of bounds array access is.
+					// Out of bounds handling would ideally be improved, but realistically
+					// the inputs are probably valid anyway unless the user has been
+					// tampering with them.
+					if (!ignore_invalid)
+					{
+						throw e;
+					}
 				}
 			}
+		}
+		else
+		{
+			init_default_controls();
+			write_config(filename);
 		}
 	}
 	command interpret_command_string(string cmd, bool ignore_invalid = true)

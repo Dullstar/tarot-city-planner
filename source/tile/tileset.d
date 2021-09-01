@@ -5,13 +5,8 @@ import std.stdio;
 import allegro5.allegro;
 import allegro5.allegro_image;
 
-import graphics;
-
-enum tile_names : int
-{
-	plains = 0,
-	farmland = 1
-}
+import graphics; 
+import tile.tile;
 
 class Tileset
 {
