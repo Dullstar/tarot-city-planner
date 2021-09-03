@@ -1,28 +1,10 @@
-module controller;
+module controller.keyboard_controller;
 import allegro5.allegro;
 import std.conv;
 import std.stdio;
 import std.string;
 import std.file;
-
-enum command 
-{
-	up = 0,
-	down = 1,
-	left = 2,
-	right = 3,
-	start = 4,
-	none
-}
-
-interface Controller
-{
-public:
-	@property ref bool[command.max] released();
-	@property ref bool[command.max] held();
-	@property ref bool[command.max] pressed();
-	@property ref bool[command.max] chars();
-}
+import controller.controller_interface;
 
 class KeyboardController : Controller
 {

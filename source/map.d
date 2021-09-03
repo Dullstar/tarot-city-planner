@@ -19,6 +19,7 @@ public:
 		// tiles = make_world(size_x, size_y);
 		tiles = load_preset_world("resources/map.txt", m_size_x, m_size_y);
 		clean_preset_world();
+		cursor = new Tile(-1, -1, tile_names.cursor);
 	}
 	void draw(int scroll_x, int scroll_y)
 	{
@@ -51,6 +52,10 @@ public:
 				}
 			}
 		}	
+		// We could technically check if this is on screen, but it probably
+		// won't benefit the performance since it's just one object
+		// so it's not worth the time given the strict time limit
+		tileset.draw_tile(tile_names.cursor, cursor.x * tile_size - scroll_x, cursor.y * tile_size - scroll_y);
 		return;  // inserted to ease adding breakpoints.
 	}
 	@property @safe int size_x() const nothrow
@@ -75,6 +80,7 @@ public:
 	{
 		return (y * m_size_x) + x;
 	}
+	Tile cursor;
 private:
 	int m_size_x;
 	int m_size_y;

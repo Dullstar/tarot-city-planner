@@ -22,7 +22,7 @@ class MainWindow
 public:
 	this(int size_x, int size_y)
 	{
-		display = al_create_display(size_x * 2, size_y * 2);
+		display = al_create_display(size_x * Settings.screen_scale, size_y * Settings.screen_scale);
 		initialize((display !is null), "display");
 		timer = al_create_timer(1 / 60.0);
 		initialize((timer !is null), "timer");
@@ -32,10 +32,13 @@ public:
 		al_register_event_source(queue, al_get_keyboard_event_source());
 		al_register_event_source(queue, al_get_display_event_source(display));
 		al_register_event_source(queue, al_get_timer_event_source(timer));
+		al_register_event_source(queue, al_get_mouse_event_source());
 
 		main_buffer = al_create_bitmap(size_x, size_y);
 		kb_controller = new KeyboardController("");
+		mouse_controller = new MouseController();
 		al_start_timer(timer);
+		// al_grab_mouse(display);
 		// Font.create_fonts();
 		current_state = new MainMenu(main_buffer, this);
 	}
@@ -76,10 +79,20 @@ public:
 				// writeln("Key up event: ", event.keyboard.keycode);
 				kb_controller.interpret_release(event.keyboard.keycode);
 				break;
+			case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
+				mouse_controller.interpret_down(&event);
+				break;
+			case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
+				mouse_controller.interpret_release(&event);
+				break;
 			case ALLEGRO_EVENT_DISPLAY_CLOSE:
 				return;
 			case ALLEGRO_EVENT_DISPLAY_SWITCH_OUT:
 				kb_controller.handle_switch_out();
+				al_ungrab_mouse();
+				break;
+			case ALLEGRO_EVENT_DISPLAY_SWITCH_IN:
+				// al_grab_mouse(display);
 				break;
 			default:
 				// we can safely ignore any events we don't need to explicitly handle
@@ -103,6 +116,7 @@ public:
 	// enforce using it correctly, but I'm the only one working on this
 	// for now anyway, so it should be okay.
 	KeyboardController kb_controller;
+	MouseController mouse_controller;
 private:
 	ALLEGRO_TIMER* timer;
 	ALLEGRO_EVENT_QUEUE* queue;
@@ -110,29 +124,12 @@ private:
 	ALLEGRO_BITMAP* main_buffer;
 	void update()
 	{
-		/*// TEMP
-		foreach (i, key; kb_controller.pressed)
-		{
-			if (key) writeln("Pressed: ", i);
-		}
-		foreach (i, key; kb_controller.chars)
-		{
-			if (key) writeln("Char: ", i);
-		}
-		foreach (i, key; kb_controller.held)
-		{
-			if (key) writeln("Held: ", i);
-		}
-		foreach (i, key; kb_controller.released)
-		{
-			if (key) writeln("Released: ", i);
-		}
-		// END TEMP*/
 		current_state.update();
 		kb_controller.prep_for_next_frame();
+		mouse_controller.prep_for_next_frame();
 		if (state_change_queued)
 		{
-			writeln("Processing state change...");
+			// writeln("Processing state change...");
 			final switch (next_state)
 			{
 			case game_state_type.main_menu:
@@ -180,8 +177,10 @@ int main()
 		initialize(al_init(), "Allegro");
 		initialize(al_init_image_addon(), "Allegro image addon.");
 		initialize(al_install_keyboard(), "keyboard");
-		Settings.set_screen_size(320, 240);
-		auto main_game = new MainWindow(320, 240);
+		initialize(al_install_mouse(), "mouse");
+		Settings.set_screen_size(480, 270);  // 480 x 256 is best tile-aligned that fits in 16:9
+		Settings.set_screen_scale(2);
+		auto main_game = new MainWindow(Settings.screen_size_x, Settings.screen_size_y);
 		main_game.run();
 		return 0;
 	});

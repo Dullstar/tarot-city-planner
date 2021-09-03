@@ -19,6 +19,7 @@ class Tileset
 		graphics[tile_names.water] = new StaticImage("resources/water.png");
 		graphics[tile_names.forest] = new StaticImage("resources/forest.png");
 		graphics[tile_names.farmland] = new StaticImage("resources/farmland.png");
+		graphics[tile_names.cursor] = new StaticImage("resources/cursor.png");
 	}
 	void draw_tile(int tile_graphics_index, int draw_x, int draw_y)
 	{

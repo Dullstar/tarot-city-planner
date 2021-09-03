@@ -6,6 +6,7 @@ enum tile_names : int
 	water = 1,
 	forest = 2,
 	farmland = 3,
+	cursor // should probably move this somewhere else later.
 }
 
 final class Tile
