@@ -16,6 +16,5 @@ public:
 	}
 	override void draw()
 	{
-		import std.stdio;
 	}
 }
