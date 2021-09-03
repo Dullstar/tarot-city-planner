@@ -1,10 +1,12 @@
 module map;
 import allegro5.allegro;
 import std.algorithm.comparison;
+import std.conv;
 import tile;
 import world;
 import constants;
 import settings;
+import map_objects;
 
 class Map
 {
@@ -14,7 +16,9 @@ public:
 		m_size_x = _size_x;
 		m_size_y = _size_y;
 		tileset = new Tileset("resources/tileset.txt");
-		tiles = make_world(size_x, size_y);
+		// tiles = make_world(size_x, size_y);
+		tiles = load_preset_world("resources/map.txt", m_size_x, m_size_y);
+		clean_preset_world();
 	}
 	void draw(int scroll_x, int scroll_y)
 	{
@@ -27,13 +31,24 @@ public:
 		{
 			for (int x = start_tile_x; x <= end_tile_x; ++x)
 			{
+				auto immutable index = get_tile_index(x, y);
+				// Tiles
 				tileset.draw_tile
 						(
-							tiles[get_tile_index(x, y)].graphics_index,
+							tiles[index].graphics_index,
 							x * tile_size - scroll_x,
 							y * tile_size - scroll_y
 						);
-
+				// Map Objects
+				if (objects[index] !is null)
+				{
+					tileset.draw_tile
+						(
+							objects[index].graphics_index,
+							x * tile_size - scroll_x,
+							y * tile_size - scroll_y
+						);
+				}
 			}
 		}	
 		return;  // inserted to ease adding breakpoints.
@@ -65,5 +80,18 @@ private:
 	int m_size_y;
 	Tileset tileset;
 	Tile[] tiles;
+	MapObject[] objects;
 
+	void clean_preset_world()
+	{
+		objects.length = tiles.length;
+		foreach (i, tile; tiles)
+		{
+			if (tile.graphics_index == tile_names.forest)
+			{
+				tile.change_tile_type(tile_names.plains);
+				objects[i] = new Forest(i.to!int % m_size_x, i.to!int % m_size_x);
+			}
+		}
+	}
 }

@@ -3,10 +3,12 @@ module tile.tile;
 enum tile_names : int
 {
 	plains = 0,
-	farmland = 1
+	water = 1,
+	forest = 2,
+	farmland = 3,
 }
 
-class Tile
+final class Tile
 {
 public:
 	this(int x, int y, int graphics_index)
@@ -26,6 +28,10 @@ public:
 	@safe @property int graphics_index()
 	{
 		return m_graphics_index;
+	}
+	void change_tile_type(int new_type)
+	{
+		m_graphics_index = new_type;
 	}
 private:
 	int m_x;

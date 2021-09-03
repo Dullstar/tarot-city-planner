@@ -14,8 +14,10 @@ class Tileset
 	{
 		intended_filename = filename;
 		// For now, we just load a default...
-		graphics.length = 2;
+		graphics.length = tile_names.max + 1;
 		graphics[tile_names.plains] = new StaticImage("resources/plains.png");
+		graphics[tile_names.water] = new StaticImage("resources/water.png");
+		graphics[tile_names.forest] = new StaticImage("resources/forest.png");
 		graphics[tile_names.farmland] = new StaticImage("resources/farmland.png");
 	}
 	void draw_tile(int tile_graphics_index, int draw_x, int draw_y)

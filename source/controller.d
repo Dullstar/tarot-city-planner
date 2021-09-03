@@ -35,7 +35,7 @@ public:
 	   	{
 			try
 			{
-				load_config(filename);
+				load_config(config);
 			}
 			catch(Exception e)
 			{

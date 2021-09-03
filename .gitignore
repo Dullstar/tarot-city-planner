@@ -10,6 +10,7 @@ tarot-city-planner.a
 tarot-city-planner.lib
 tarot-city-planner-test-*
 tarot-city-planner.sln
+source/python/*.txt
 .vs
 .vscode
 *.exe
