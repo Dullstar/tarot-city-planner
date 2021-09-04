@@ -4,10 +4,12 @@ import std.stdio;
 import std.string;
 import allegro5.allegro;
 import allegro5.allegro_image;
+import allegro5.allegro_font;
 
 import controller;
 import settings;
 import gameplay;
+import font;
 
 void initialize(bool test, string what)
 {
@@ -28,6 +30,7 @@ public:
 		initialize((timer !is null), "timer");
 		queue = al_create_event_queue();
 		initialize((queue !is null), "event queue");
+		Font.font = al_create_builtin_font();
 
 		al_register_event_source(queue, al_get_keyboard_event_source());
 		al_register_event_source(queue, al_get_display_event_source(display));
@@ -47,6 +50,7 @@ public:
 		al_destroy_display(display);
 		al_destroy_timer(timer);
 		al_destroy_event_queue(queue);
+		al_destroy_font(Font.font);
 		// Font.destroy_fonts();
 	}
 	void run()
@@ -68,7 +72,7 @@ public:
 				}
 				break;
 			case ALLEGRO_EVENT_KEY_DOWN:
-				writeln("Key down event: ", event.keyboard.keycode);
+				// writeln("Key down event: ", event.keyboard.keycode);
 				kb_controller.interpret_down(event.keyboard.keycode);
 				break;
 			case ALLEGRO_EVENT_KEY_CHAR:
@@ -76,7 +80,7 @@ public:
 				kb_controller.interpret_char(event.keyboard.keycode);
 				break;
 			case ALLEGRO_EVENT_KEY_UP:
-				writeln("Key up event: ", event.keyboard.keycode);
+				// writeln("Key up event: ", event.keyboard.keycode);
 				kb_controller.interpret_release(event.keyboard.keycode);
 				break;
 			case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
@@ -124,7 +128,7 @@ private:
 	ALLEGRO_BITMAP* main_buffer;
 	void update()
 	{
-		// TEMP
+		/*// TEMP
 		foreach (i, key; kb_controller.pressed)
 		{
 			if (key) writeln("Pressed: ", i);
@@ -137,7 +141,7 @@ private:
 		{
 			if (key) writeln("Released: ", i);
 		}
-		// END TEMP
+		// END TEMP*/
 		current_state.update();
 		kb_controller.prep_for_next_frame();
 		mouse_controller.prep_for_next_frame();
@@ -192,6 +196,7 @@ int main()
 		initialize(al_init_image_addon(), "Allegro image addon.");
 		initialize(al_install_keyboard(), "keyboard");
 		initialize(al_install_mouse(), "mouse");
+		initialize(al_init_font_addon(), "Allegro font addon.");
 		Settings.set_screen_size(480, 270);  // 480 x 256 is best tile-aligned that fits in 16:9
 		Settings.set_screen_scale(2);
 		auto main_game = new MainWindow(Settings.screen_size_x, Settings.screen_size_y);

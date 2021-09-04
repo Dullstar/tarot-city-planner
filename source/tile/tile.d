@@ -34,6 +34,13 @@ public:
 	{
 		m_graphics_index = new_type;
 	}
+	// Most tiles should not be moved! This function is intended
+	// for special tiles like the cursor.
+	void move(int new_x, int new_y)
+	{
+		m_x = new_x;
+		m_y = new_y;
+	}
 private:
 	int m_x;
 	int m_y;

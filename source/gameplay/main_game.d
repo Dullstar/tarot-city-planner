@@ -8,6 +8,7 @@ import constants;
 import app;
 import controller;
 import tile;
+import ui;
 
 class MainGame : GameState
 {
@@ -15,14 +16,21 @@ public:
 	this(ALLEGRO_BITMAP* main_buffer, MainWindow parent)
 	{
 		super(main_buffer, parent);
-		map = new Map(100, 100);
+		map = new Map(100, 100, Settings.screen_size_x - 100, Settings.screen_size_y);
 		scroll_x = 0;
 		scroll_y = 0;
 		scroll_speed = 4;
 		regular_scroll_speed = scroll_speed;
 		speed_up_scroll_speed = 10;
-		max_scroll_x = (tile_size * map.size_x) - Settings.screen_size_x;
-		max_scroll_y = (tile_size * map.size_y) - Settings.screen_size_y;
+		max_scroll_x = (tile_size * map.size_x) - map.buffer_size_x;
+		max_scroll_y = (tile_size * map.size_y) - map.buffer_size_y;
+		sidebar = new UI
+		(
+			Settings.screen_size_x - map.buffer_size_x,
+			Settings.screen_size_y,
+			map.buffer_size_x,
+			0
+		);
 	}
 	override void update()
 	{
@@ -39,10 +47,6 @@ public:
 		if (parent.kb_controller.held[command.down])
 		{
 			scroll_y += scroll_speed;
-			// This could *definitely* get cached. The main reason for not doing that is that
-			// we don't have any signal system for any of the many mostly-stable parameters
-			// changing: while there aren't any currently, they'd be a potential problem later.
-			// But certianly this (and the comparable code in x) are a missed optimization opportunity
 			if (scroll_y > max_scroll_y)
 				scroll_y = max_scroll_y;	
 		}
@@ -62,21 +66,26 @@ public:
 		scroll_speed = regular_scroll_speed;
 		if (parent.mouse_controller.pressed[mouse_buttons.M1])
 		{
-			map.cursor = new Tile
-			(
-				(parent.mouse_controller.click_x + scroll_x) / 16,
-				(parent.mouse_controller.click_y + scroll_y) / 16,
-				tile_names.cursor
-			); // long term maybe I should make it possible to move Tile.
+			immutable int click_x = parent.mouse_controller.click_x + scroll_x;
+			immutable int click_y = parent.mouse_controller.click_y + scroll_y;
+			if (click_x < map.buffer_size_x)
+			{
+				map.cursor.move(click_x / 16, click_y / 16);
+			}
+			else
+			{
+				// For now do nothing. This will change.
+			}
 		}
 		if (parent.mouse_controller.pressed[mouse_buttons.M2])
 		{
-			map.cursor = new Tile(-1, -1, tile_names.cursor);
+			map.cursor.move(-1, -1);
 		}
 	}
 	override void draw()
 	{	
 		map.draw(scroll_x, scroll_y);
+		sidebar.draw();
 	}
 private:
 	Map map;
@@ -87,4 +96,10 @@ private:
 	int regular_scroll_speed;
 	int max_scroll_x;
 	int max_scroll_y;
+	UI sidebar;
+
+	void create_house()
+	{
+
+	}
 }
