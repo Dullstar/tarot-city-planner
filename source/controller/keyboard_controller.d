@@ -66,8 +66,13 @@ public:
 		// Under certain conditions, extra keydown events can be generated
 		// (modifier keys in particular seem to cause this soemtimes),
 		// so throw them out if that happens.
-		if (raw_key_held[keycode]) return;
+		if (raw_key_held[keycode]) 
+		{	
+			// writeln("Tossed a duplicate key down event.");
+			return;
+		}
 		raw_key_downs[keycode] = true;
+		raw_key_held[keycode] = true;
 		command translated = translation_table[keycode];
 		if (translated == command.none) return;
 		if (number_keys_held[translated] == 0)
