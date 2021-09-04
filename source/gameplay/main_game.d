@@ -19,11 +19,17 @@ public:
 		scroll_x = 0;
 		scroll_y = 0;
 		scroll_speed = 4;
+		regular_scroll_speed = scroll_speed;
+		speed_up_scroll_speed = 10;
 		max_scroll_x = (tile_size * map.size_x) - Settings.screen_size_x;
 		max_scroll_y = (tile_size * map.size_y) - Settings.screen_size_y;
 	}
 	override void update()
 	{
+		if (parent.kb_controller.held[command.speed_up])
+		{
+			scroll_speed = speed_up_scroll_speed;
+		}
 		if (parent.kb_controller.held[command.up])
 		{
 			scroll_y -= scroll_speed;
@@ -52,23 +58,8 @@ public:
 			if (scroll_x > max_scroll_x)
 				scroll_x = max_scroll_x;
 		}
-		// This is probably safe to remove, but may be worth having lying around
-		// if implementing resizing or something like that.
-		// But if you're reading this in the future and that's been implemented,
-		// go ahead and remove this if statement.
-		/*if (parent.kb_controller.pressed[command.start])
-		{
-			import std.stdio.writeln;
-			writeln("These tiles will be drawn:");
-			for (int y = scroll_y / tile_size; y < (scroll_y + Settings.screen_size_y) / tile_size; ++y)
-			{
-				for (int x = scroll_x / tile_size; x < (scroll_x + Settings.screen_size_x) / tile_size; ++x)
-				{
-					writeln("    ", x, ", ", y, "    index: ", map.get_tile_index(x, y));
-
-				}
-			}
-		}*/
+		// now that we're done with the scrolling, put the scroll speed back in case it changed
+		scroll_speed = regular_scroll_speed;
 		if (parent.mouse_controller.pressed[mouse_buttons.M1])
 		{
 			map.cursor = new Tile
@@ -92,6 +83,8 @@ private:
 	int scroll_x;
 	int scroll_y;
 	int scroll_speed;
+	int speed_up_scroll_speed;
+	int regular_scroll_speed;
 	int max_scroll_x;
 	int max_scroll_y;
 }

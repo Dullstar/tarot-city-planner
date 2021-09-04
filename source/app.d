@@ -68,7 +68,7 @@ public:
 				}
 				break;
 			case ALLEGRO_EVENT_KEY_DOWN:
-				// writeln("Key down event: ", event.keyboard.keycode);
+				writeln("Key down event: ", event.keyboard.keycode);
 				kb_controller.interpret_down(event.keyboard.keycode);
 				break;
 			case ALLEGRO_EVENT_KEY_CHAR:
@@ -76,7 +76,7 @@ public:
 				kb_controller.interpret_char(event.keyboard.keycode);
 				break;
 			case ALLEGRO_EVENT_KEY_UP:
-				// writeln("Key up event: ", event.keyboard.keycode);
+				writeln("Key up event: ", event.keyboard.keycode);
 				kb_controller.interpret_release(event.keyboard.keycode);
 				break;
 			case ALLEGRO_EVENT_MOUSE_BUTTON_DOWN:
@@ -124,6 +124,20 @@ private:
 	ALLEGRO_BITMAP* main_buffer;
 	void update()
 	{
+		// TEMP
+		foreach (i, key; kb_controller.pressed)
+		{
+			if (key) writeln("Pressed: ", i);
+		}
+		//foreach (i, key; kb_controller.held)
+		//{
+		//	if (key) writeln("Held: ", i);
+		//}
+		foreach (i, key; kb_controller.released)
+		{
+			if (key) writeln("Released: ", i);
+		}
+		// END TEMP
 		current_state.update();
 		kb_controller.prep_for_next_frame();
 		mouse_controller.prep_for_next_frame();

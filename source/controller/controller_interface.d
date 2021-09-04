@@ -7,8 +7,7 @@ enum command
 	left = 2,
 	right = 3,
 	start = 4,
-	left_click = 5,
-	right_click = 6,
+	speed_up = 5,
 	none
 }
 

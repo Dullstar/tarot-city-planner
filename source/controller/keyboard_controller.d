@@ -11,8 +11,6 @@ class KeyboardController : Controller
 public:
 	this(string config)
 	{
-		// consider removing this conditional, keeping only this branch
-		// rand removing the else branch completely.
 		if (config != "")
 	   	{
 			try
@@ -47,8 +45,29 @@ public:
 	{
 		return translated_key_chars;
 	}
+	@property ref bool[ALLEGRO_KEY_MAX] raw_held()
+	{
+		return raw_key_held;
+	}
+	@property ref bool[ALLEGRO_KEY_MAX] raw_pressed()
+	{
+		return raw_key_downs;
+	}
+	@property ref bool[ALLEGRO_KEY_MAX] raw_released()
+	{
+		return raw_key_released;
+	}
+	@property ref bool[ALLEGRO_KEY_MAX] raw_chars()
+	{
+		return raw_key_chars;
+	}
 	void interpret_down(int keycode)
 	{
+		// Under certain conditions, extra keydown events can be generated
+		// (modifier keys in particular seem to cause this soemtimes),
+		// so throw them out if that happens.
+		if (raw_key_held[keycode]) return;
+		raw_key_downs[keycode] = true;
 		command translated = translation_table[keycode];
 		if (translated == command.none) return;
 		if (number_keys_held[translated] == 0)
@@ -65,12 +84,14 @@ public:
 	}
 	void interpret_char(int keycode)
 	{
+		raw_key_chars[keycode] = true;
 		command translated = translation_table[keycode];
 		if (translated == command.none) return;
 		translated_key_chars[translated] = true;
 	}
 	void interpret_release(int keycode)
 	{
+		raw_key_released[keycode] = true;
 		command translated = translation_table[keycode];
 		if (translated == command.none) return;
 		number_keys_held[translated] -= 1;
@@ -80,6 +101,9 @@ public:
 			// just needs to prevent any sort of input lockup. An else if is used for
 			// zero as I don't want to generate new released events if we've already
 			// assumed the key was released.
+			// This may need some additional work, but right now no actions are based
+			// on key release, so idk if it feels right. If it feels wrong we can always
+			// fix it later.
 			number_keys_held[translated] = 0;
 		}
 		else if (number_keys_held[translated] == 0)
@@ -100,6 +124,10 @@ public:
 			{
 				translated_key_held[translated] = false;
 			}
+			if (!raw_key_downs[keycode])
+			{
+				raw_key_held[keycode] = false;
+			}
 		}
 	}
 	void prep_for_next_frame()
@@ -111,6 +139,16 @@ public:
 				translated_key_held[i] = false;
 			}
 		}
+		for (int i = 0; i < ALLEGRO_KEY_MAX; ++i)
+		{
+			if (raw_key_released[i])
+			{
+				raw_key_held[i] = false;
+			}
+		}
+		raw_key_downs[] = false;
+		raw_key_released[] = false;
+		raw_key_chars[] = false;
 		translated_key_downs[] = false;
 		translated_key_released[] = false;
 		translated_key_chars[] = false;
@@ -129,6 +167,10 @@ private:
 	bool[command.max] translated_key_held;
 	bool[command.max] translated_key_chars;
 	int[command.max] number_keys_held;
+	bool[ALLEGRO_KEY_MAX] raw_key_downs;
+	bool[ALLEGRO_KEY_MAX] raw_key_released;
+	bool[ALLEGRO_KEY_MAX] raw_key_held;
+	bool[ALLEGRO_KEY_MAX] raw_key_chars;
 	command[ALLEGRO_KEY_MAX] translation_table = command.none;
 
 	void init_default_controls()
@@ -142,6 +184,8 @@ private:
 		translation_table[ALLEGRO_KEY_D] = command.right;
 		translation_table[ALLEGRO_KEY_RIGHT] = command.right;
 		translation_table[ALLEGRO_KEY_ENTER] = command.start;
+		translation_table[ALLEGRO_KEY_LSHIFT] = command.speed_up;
+		translation_table[ALLEGRO_KEY_RSHIFT] = command.speed_up;
 	}
 	void clear_translation_table()
 	{
