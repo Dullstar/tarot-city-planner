@@ -90,7 +90,18 @@ public:
 	{
 		return (y * m_size_x) + x;
 	}
-	Tile cursor;
+	Tile get_tile_under_cursor()
+	{
+		// This relies on using the convention that if the cursor isn't on anything
+		// it will be placed in negative coordinates. This should be -1, -1 usually.
+		if (cursor.x < 0 || cursor.y < 0) return null;
+		return tiles[get_tile_index(cursor.x, cursor.y)];
+	}
+	MapObject get_map_object_under_cursor()
+	{
+		if (cursor.x < 0 || cursor.y < 0) return null;
+		return objects[get_tile_index(cursor.x, cursor.y)];
+	}
 	@property int buffer_size_x() nothrow
 	{
 		return al_get_bitmap_width(map_buffer);
@@ -99,10 +110,12 @@ public:
 	{
 		return al_get_bitmap_height(map_buffer);
 	}
+
+	Tile cursor;
+	Tileset tileset;
 private:
 	int m_size_x;
 	int m_size_y;
-	Tileset tileset;
 	Tile[] tiles;
 	MapObject[] objects;
 	ALLEGRO_BITMAP* map_buffer;

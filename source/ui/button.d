@@ -1,6 +1,9 @@
 module ui.button;
+import allegro5.allegro_primitives;
 import font;
 import std.string;
+import tile.tileset;
+import constants;
 
 enum button_state
 {
@@ -11,20 +14,15 @@ enum button_state
 abstract class Button
 {
 public:
-	this(ALLEGRO_BITMAP* bitmap, int pos_x, int pos_y, void delegate() _on_click, void delegate() _on_update)
+	this(int size_x, int size_y, int pos_x, int pos_y, void delegate() _on_click, void delegate() _on_update)
 	{
-		m_bitmap = bitmap;
 		on_click = _on_click;
 		on_update = _on_update;
-		m_size_x = al_get_bitmap_width(m_bitmap);
-		m_size_y = al_get_bitmap_height(m_bitmap);
+		m_size_x = size_x;
+		m_size_y = size_y;
 		m_pos_x = pos_x;
 		m_pos_y = pos_y;
 		m_state = button_state.active;
-	}
-	~this()
-	{
-		al_destroy_bitmap(m_bitmap);
 	}
 	@property @safe int size_x() const nothrow
 	{
@@ -42,22 +40,19 @@ public:
 	{
 		return m_pos_y;
 	}
-	void draw()
-	{
+	void draw();
+	/*{
 		if (m_state != button_state.hidden)
 		{
 			al_draw_bitmap(m_bitmap, m_pos_x, m_pos_y, 0);
 		}
-	}
+	}*/
 	void delegate() on_click;
 	void delegate() on_update;
-private:
+protected:
 	button_state m_state;
-	ALLEGRO_BITMAP* m_bitmap;
 	int m_pos_x;
 	int m_pos_y;
-	// I'd have to remove the const and @safe if I didn't just cache these,
-	// but I doubt there'd be any perf difference if I didn't store these.
 	int m_size_x;
 	int m_size_y;
 }
@@ -67,19 +62,62 @@ class TextButton : Button
 public:
 	this(string text, int pos_x, int pos_y, void delegate() on_click, void delegate() on_update)
 	{
-		auto immutable c_text = text.toStringz;
+		immutable auto c_text = text.toStringz;
 		immutable int size_x = al_get_text_width(Font.font, c_text);
 		immutable int size_y = al_get_font_line_height(Font.font);
-		auto bitmap = al_create_bitmap(size_x, size_y);
+		m_active = al_create_bitmap(size_x, size_y);
+		m_inactive = al_create_bitmap(size_x, size_y);
 		auto draw_target = al_get_target_bitmap();
-		al_set_target_bitmap(bitmap);
+		al_set_target_bitmap(m_active);
 		al_draw_text(Font.font, al_map_rgb(255, 255, 255), 0, 0, 0, c_text);
-		super(bitmap, pos_x, pos_y, on_click, on_update);
+		al_set_target_bitmap(m_inactive);
+		al_draw_text(Font.font, al_map_rgb(150, 150, 150), 0, 0, 0, c_text);
+		super(size_x, size_y, pos_x, pos_y, on_click, on_update);
 		al_set_target_bitmap(draw_target);
 	}
+	~this()
+	{
+		al_destroy_bitmap(m_active);
+		al_destroy_bitmap(m_inactive);
+	}
+	override void draw()
+	{
+		if (m_state == button_state.active)
+		{
+			al_draw_bitmap(m_active, pos_x, pos_y, 0);
+		}
+		else if (m_state == button_state.inactive)
+		{
+			al_draw_bitmap(m_inactive, pos_x, pos_y, 0);
+		}
+	}
+private:
+	ALLEGRO_BITMAP* m_active;
+	ALLEGRO_BITMAP* m_inactive;
 }
 
-/*class GraphicButton : Button
+class TileButton : Button
 {
-
-}*/
+public:
+	this(Tileset tileset, int graphics_index, int pos_x, int pos_y, void delegate() on_click, void delegate() on_update)
+	{
+		m_tileset = tileset;
+		m_graphics_index = graphics_index;
+		super(tile_size, tile_size, pos_x, pos_y, on_click, on_update);
+	}
+	override void draw()
+	{
+		if (m_state != button_state.hidden)
+		{
+			m_tileset.draw_tile(m_graphics_index, pos_x, pos_y);
+			if (m_state == button_state.inactive)
+			{
+				// not the prettiest but oh well
+				al_draw_filled_rectangle(pos_x, pos_y, pos_x + tile_size, pos_y + tile_size, al_map_rgba(127, 127, 127, 127));
+			}
+		}
+	}
+private:
+	Tileset m_tileset;
+	int m_graphics_index;
+}

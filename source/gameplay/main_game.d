@@ -1,6 +1,8 @@
 module gameplay.main_game;
 import allegro5.allegro;
 import std.stdio;
+import std.string;
+import std.conv;
 import gameplay.game_state;
 import map;
 import settings;
@@ -9,6 +11,8 @@ import app;
 import controller;
 import tile;
 import ui;
+import map_objects;
+import font;
 
 class MainGame : GameState
 {
@@ -68,9 +72,11 @@ public:
 		{
 			immutable int click_x = parent.mouse_controller.click_x + scroll_x;
 			immutable int click_y = parent.mouse_controller.click_y + scroll_y;
-			if (click_x < map.buffer_size_x)
+			if (parent.mouse_controller.click_x < map.buffer_size_x)
 			{
 				map.cursor.move(click_x / 16, click_y / 16);
+				coords = "@(" ~ map.cursor.x.to!string ~ ", " ~ map.cursor.y.to!string ~ ")";
+				tile_click_handling();
 			}
 			else
 			{
@@ -80,12 +86,41 @@ public:
 		if (parent.mouse_controller.pressed[mouse_buttons.M2])
 		{
 			map.cursor.move(-1, -1);
+			sidebar.set_layout(sidebar_settings.none);
+			tile_click_handling();
 		}
 	}
 	override void draw()
 	{	
 		map.draw(scroll_x, scroll_y);
 		sidebar.draw();
+		if (map.cursor.x > 0)
+		{
+			al_draw_text
+			(
+				Font.font, 
+				al_map_rgb(255, 255, 255),
+				sidebar.pos_x + sidebar.margains,
+				sidebar.margains,
+				0,
+				label.toStringz
+			);
+			al_draw_text
+			(
+				Font.font,
+				al_map_rgb(255, 255, 255),
+				sidebar.pos_x + sidebar.margains,
+				sidebar.margains + al_get_font_line_height(Font.font) + tile_size,
+				0,
+				coords.toStringz
+			);
+			map.tileset.draw_tile
+			(
+				selected_index,
+				sidebar.pos_x + sidebar.margains,
+				sidebar.margains + al_get_font_line_height(Font.font)
+			);
+		}
 	}
 private:
 	Map map;
@@ -97,9 +132,75 @@ private:
 	int max_scroll_x;
 	int max_scroll_y;
 	UI sidebar;
+	string label = "";
+	string coords = "";
+	int selected_index;
 
+	// UI controls
+	enum sidebar_settings : int
+	{
+		none = 0,
+		build_submenu = 1,
+		plains_menu = 2
+	}
+	// I think the name of this function can be improved, but it needs
+	// to be called *something* for now. But it is subject to change.
+	// Reason: needs to be called with clicking on a tile, or the M2 unselect.
+	void tile_click_handling()
+	{
+		MapObject obj = map.get_map_object_under_cursor();
+		if (obj is null)
+		{
+			Tile tile = map.get_tile_under_cursor();
+			if (tile is null) 
+			{
+				// sidebar.set_layout(sidebar_settings.none);
+			}
+			else if (tile.graphics_index == tile_names.plains)
+			{
+				label = "Plains";
+				selected_index = tile_names.plains;
+				// sidebar.set_layout(sidebar_settings.plains_menu);
+			}
+			else if (tile.graphics_index == tile_names.water)
+			{
+				label = "River";
+				selected_index = tile_names.water;
+			}
+			else
+			{
+				label = "???";
+				selected_index = tile.graphics_index;
+				// sidebar.set_layout(sidebar_settings.none);
+			}
+		}
+		else if (obj.graphics_index == tile_names.forest)
+		{
+			label = "Forest";
+			selected_index = tile_names.forest;
+		}
+		else
+		{
+			label = "???";
+			selected_index = obj.graphics_index;
+			// sidebar.set_layout(sidebar_settings.none);
+		}
+	}
+
+	// Sidebar layouts
+	void make_sidebar_layouts()
+	{
+		sidebar.set_layout(sidebar_settings.plains_menu);
+	}
+
+	// Ye Olde Sections of functions that are to be used as delegates later.
+	void build_submenu()
+	{
+		sidebar.set_layout(sidebar_settings.build_submenu);
+	}
 	void create_house()
 	{
 
 	}
+
 }

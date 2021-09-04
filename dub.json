@@ -12,7 +12,8 @@
 	"libs-linux": ["allegro-5"],
 	"libs": [
 		"allegro_image",
-		"allegro_font"
+		"allegro_font",
+		"allegro_primitives"
  	]
 }
 
