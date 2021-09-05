@@ -21,13 +21,10 @@ public:
 	{
 		return m_graphics_index;
 	}
-	// This function left commented out as a reminder of how it
-	// was designed in Tile in case MapObject requires something similar.
-	/*void change_tile_type(int new_type)
-	{
-		m_graphics_index = new_type;
-	}*/
-private:
+	// update season doesn't need to do anything by default,
+	// but of course can be overridden.
+	void update_season() {}
+protected:
 	int m_x;
 	int m_y;
 	int m_graphics_index;

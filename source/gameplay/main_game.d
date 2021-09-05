@@ -20,7 +20,7 @@ public:
 	this(ALLEGRO_BITMAP* main_buffer, MainWindow parent)
 	{
 		super(main_buffer, parent);
-		map = new Map(100, 100, Settings.screen_size_x - 100, Settings.screen_size_y);
+		map = new Map(100, 100, Settings.screen_size_x - 128, Settings.screen_size_y - 8);
 		scroll_x = 0;
 		scroll_y = 0;
 		scroll_speed = 4;
@@ -35,6 +35,23 @@ public:
 			map.buffer_size_x,
 			0
 		);
+		topbar = new UI
+		(
+			map.buffer_size_x,
+			8,
+			0,
+			0
+		);
+		auto starting_roads = [19, 119, 120, 121, 122, 123, 124, 125, 126, 127];
+		foreach (road; starting_roads)
+		{
+			auto x = road % map.size_x;
+			auto y = road / map.size_y;
+			map.cursor.move(x, y);
+			map.build_new_map_object(tile_names.road);
+		}
+		map.cursor.move(-1, -1);
+		make_sidebar_layouts();
 	}
 	override void update()
 	{
@@ -74,13 +91,22 @@ public:
 			immutable int click_y = parent.mouse_controller.click_y + scroll_y;
 			if (parent.mouse_controller.click_x < map.buffer_size_x)
 			{
-				map.cursor.move(click_x / 16, click_y / 16);
-				coords = "@(" ~ map.cursor.x.to!string ~ ", " ~ map.cursor.y.to!string ~ ")";
-				tile_click_handling();
+				if (parent.mouse_controller.click_y >= 8)
+				{
+					map.cursor.move(click_x / 16, (click_y - 8)/ 16);
+					coords = "@(" ~ map.cursor.x.to!string ~ ", " ~ map.cursor.y.to!string ~ ")";
+					tile_click_handling();
+					road_proximity = map.check_road_proximity();
+					road_adjacent = map.check_road_adjacent();
+				}
+				else
+				{
+					topbar.process_click(parent.mouse_controller.click_x, parent.mouse_controller.click_y);
+				}
 			}
 			else
 			{
-				// For now do nothing. This will change.
+				sidebar.process_click(parent.mouse_controller.click_x, parent.mouse_controller.click_y);
 			}
 		}
 		if (parent.mouse_controller.pressed[mouse_buttons.M2])
@@ -89,11 +115,15 @@ public:
 			sidebar.set_layout(sidebar_settings.none);
 			tile_click_handling();
 		}
+		sidebar.update();
 	}
 	override void draw()
 	{	
 		map.draw(scroll_x, scroll_y);
 		sidebar.draw();
+		topbar.draw();
+		string money_text = "$" ~ money.to!string;
+		al_draw_text(Font.font, al_map_rgb(255, 255, 255), 0, 0, 0, money_text.toStringz);
 		if (map.cursor.x > 0)
 		{
 			al_draw_text
@@ -131,59 +161,104 @@ private:
 	int regular_scroll_speed;
 	int max_scroll_x;
 	int max_scroll_y;
+	int money = 2500;
 	UI sidebar;
+	UI topbar;
 	string label = "";
 	string coords = "";
 	int selected_index;
+	bool road_adjacent;
+	bool road_proximity;
 
 	// UI controls
 	enum sidebar_settings : int
 	{
-		none = 0,
-		build_submenu = 1,
-		plains_menu = 2
+		none,
+		build_submenu,
+		plains_menu,
+		build_bridge,
+		forest,
+		farm,
+		housing,
+		office,
+		hospital
 	}
 	// I think the name of this function can be improved, but it needs
 	// to be called *something* for now. But it is subject to change.
 	// Reason: needs to be called with clicking on a tile, or the M2 unselect.
 	void tile_click_handling()
 	{
+		// This branch can probably be refactored.
 		MapObject obj = map.get_map_object_under_cursor();
 		if (obj is null)
 		{
 			Tile tile = map.get_tile_under_cursor();
 			if (tile is null) 
 			{
-				// sidebar.set_layout(sidebar_settings.none);
+				sidebar.set_layout(sidebar_settings.none);
 			}
-			else if (tile.graphics_index == tile_names.plains)
+			else  // tile !is null
 			{
-				label = "Plains";
-				selected_index = tile_names.plains;
-				// sidebar.set_layout(sidebar_settings.plains_menu);
-			}
-			else if (tile.graphics_index == tile_names.water)
-			{
-				label = "River";
-				selected_index = tile_names.water;
-			}
-			else
-			{
-				label = "???";
 				selected_index = tile.graphics_index;
-				// sidebar.set_layout(sidebar_settings.none);
+				switch (tile.graphics_index)
+				{
+				case tile_names.plains:
+					label = "Plains";
+					sidebar.set_layout(sidebar_settings.plains_menu);
+					break;
+				case tile_names.water:
+					label = "River";
+					sidebar.set_layout(sidebar_settings.build_bridge);
+					break;
+				default:
+					label = "???";
+					sidebar.set_layout(sidebar_settings.none);
+				}
 			}
 		}
-		else if (obj.graphics_index == tile_names.forest)
+		else // obj !is null
 		{
-			label = "Forest";
-			selected_index = tile_names.forest;
-		}
-		else
-		{
-			label = "???";
 			selected_index = obj.graphics_index;
-			// sidebar.set_layout(sidebar_settings.none);
+			switch (obj.graphics_index)
+			{
+			case tile_names.forest:
+				label = "Forest";
+				sidebar.set_layout(sidebar_settings.none);
+				break;
+			case tile_names.burnt_forest:
+				label = "Burnt Forest";
+				sidebar.set_layout(sidebar_settings.none);
+				break;
+			case tile_names.farmland:
+			case tile_names.farmland_with_food:
+				label = "Farm";
+				sidebar.set_layout(sidebar_settings.none);
+				break;
+			case tile_names.house:
+				label = "House";
+				sidebar.set_layout(sidebar_settings.none);
+				break;
+			case tile_names.apartments:
+				label = "Apartment";
+				sidebar.set_layout(sidebar_settings.none);
+				break;
+			case tile_names.hospital:
+				label = "Hospital";
+				sidebar.set_layout(sidebar_settings.none);
+				break;
+			case tile_names.office:
+				label = "Office";
+				sidebar.set_layout(sidebar_settings.none);
+				break;
+			case tile_names.road:
+				label = "Road";
+				sidebar.set_layout(sidebar_settings.none);
+				break;
+			default:
+				label = "???";
+				sidebar.set_layout(sidebar_settings.none);
+				break;
+			}
 		}
 	}
 
@@ -191,16 +266,144 @@ private:
 	void make_sidebar_layouts()
 	{
 		sidebar.set_layout(sidebar_settings.plains_menu);
-	}
-
-	// Ye Olde Sections of functions that are to be used as delegates later.
-	void build_submenu()
-	{
+		sidebar.create_text_button
+		(
+			"Build...",
+			sidebar.margains,
+			sidebar.auto_button_y,
+			//(sidebar.margains * 2) + al_get_font_line_height(Font.font) + (2 * tile_size),
+			{sidebar.set_layout(sidebar_settings.build_submenu);},
+			{
+				if (road_proximity && money > price_house) return button_state.active;
+				else return button_state.inactive;
+			}
+		);
+		sidebar.create_text_button
+		(
+			"Build Road: " ~ price_road.to!string,
+			sidebar.margains,
+			sidebar.auto_button_y,
+			{create_map_object(tile_names.road);},
+			{return build_road_checks();}
+		);
+		sidebar.set_layout(sidebar_settings.build_bridge);
+		sidebar.create_text_button
+		(
+			"Build Bridge: " ~ price_road.to!string,
+			sidebar.margains,
+			sidebar.auto_button_y,
+			{create_map_object(tile_names.road);},
+			{return build_road_checks();}
+		);
+		writeln("Check in 3");
 		sidebar.set_layout(sidebar_settings.build_submenu);
+		sidebar.create_text_button
+		(
+			"Build what?",
+			sidebar.margains,
+			(sidebar.margains * 2) + al_get_font_line_height(Font.font) + (2 * tile_size),
+			{}, {return button_state.active;}
+		);
+		sidebar.create_tile_button
+		(
+			map.tileset,
+			tile_names.farmland_with_food,
+			"Farm: " ~ price_farm.to!string,
+			sidebar.margains / 2,
+			sidebar.auto_button_y,
+			{create_map_object(tile_names.farmland);},
+			// As long as farm's price = min price if we got to this menu we know we can afford it
+			{return button_state.active;}
+		);
+		sidebar.create_tile_button
+		(
+			map.tileset,
+			tile_names.house,
+			"House: " ~ price_house.to!string,
+			sidebar.margains / 2,
+			sidebar.auto_button_y - sidebar.margains,
+			{create_map_object(tile_names.house);},
+			// See farm's comment
+			{return button_state.active;}
+		);
+		sidebar.create_tile_button
+		(
+			map.tileset,
+			tile_names.apartments,
+			"Apt.: " ~ price_apartments.to!string,
+			sidebar.margains / 2,
+			sidebar.auto_button_y - sidebar.margains,
+			{create_map_object(tile_names.apartments);},
+			{
+				if (money >= price_apartments) return button_state.active;
+				else return button_state.inactive;
+			}
+		);
+		sidebar.create_tile_button
+		(
+			map.tileset,
+			tile_names.office,
+			"Office: " ~ price_office.to!string,
+			sidebar.margains / 2,
+			sidebar.auto_button_y - sidebar.margains,
+			{create_map_object(tile_names.office);},
+			{
+				if (money >= price_office) return button_state.active;
+				else return button_state.inactive;
+			}
+		);
+		sidebar.create_tile_button
+		(
+			map.tileset,
+			tile_names.hospital,
+			"Hospital: " ~ price_office.to!string,
+			sidebar.margains / 2,
+			sidebar.auto_button_y - sidebar.margains,
+			{create_map_object(tile_names.hospital);},
+			{
+				if (money >= price_hospital) return button_state.active;
+				else return button_state.inactive;
+			}
+		);
+
+		sidebar.set_layout(sidebar_settings.none);
 	}
-	void create_house()
+	void create_map_object(tile_names object)
 	{
-
+		map.build_new_map_object(object);
+		int cost = 0;
+		switch (object)
+		{
+		case tile_names.farmland:
+			cost = price_farm;
+			break;
+		case tile_names.house:
+			cost = price_house;
+			break;
+		case tile_names.apartments:
+			cost = price_apartments;
+			break;
+		case tile_names.hospital:
+			cost = price_hospital;
+			break;
+		case tile_names.office:
+			cost = price_office;
+			break;
+		case tile_names.road:
+			cost = price_road;
+			break;
+		default:
+			throw new Exception("Shouldn't be attempting to build object: " ~ object.to!string);
+		}
+		money -= cost;
+		tile_click_handling();
+		road_proximity = map.check_road_proximity();
+		road_adjacent = map.check_road_adjacent();
 	}
 
+	button_state build_road_checks()
+	{
+		if (road_adjacent) return button_state.active;
+		return button_state.inactive;
+	}
 }

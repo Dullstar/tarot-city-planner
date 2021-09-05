@@ -5,8 +5,17 @@ enum tile_names : int
 	plains = 0,
 	water = 1,
 	forest = 2,
-	farmland = 3,
-	cursor // should probably move this somewhere else later.
+	burnt_forest = 3,
+	farmland = 4,
+	farmland_with_food = 5,
+	house = 6,
+	apartments = 7,
+	office = 8,
+	hospital = 9,
+	road = 10,
+	// Cursor and Disaster Location are special tiles and intentionally at the end of the list.
+	cursor,
+	disaster_location
 }
 
 final class Tile

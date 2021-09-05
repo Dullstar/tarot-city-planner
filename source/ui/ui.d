@@ -2,6 +2,11 @@ module ui.ui;
 import allegro5.allegro;
 import ui.button;
 import controller.mouse_controller;
+import std.stdio;
+import std.conv;
+import tile.tileset;
+import constants;
+import font;
 
 // There's a null check to make sure things won't crash if you don't,
 // but that's about all it does after construction.
@@ -28,7 +33,8 @@ public:
 		immutable int adj_y = click_y - m_pos_y;
 		foreach(button; m_buttons[m_layout])
 		{
-			if (adj_x >= button.pos_x 
+			if (button.state == button_state.active
+				&& adj_x >= button.pos_x 
 				&& adj_x < button.pos_x + button.size_x
 				&& adj_y >= button.pos_y
 				&& adj_y < button.pos_y + button.size_y)
@@ -37,13 +43,29 @@ public:
 			}
 		}
 	}
-	void create_text_button(string text, int pos_x, int pos_y, void delegate() on_click, void delegate() on_update)
+	void create_text_button(string text, int pos_x, int pos_y, void delegate() on_click, button_state delegate() on_update)
 	{
 		m_buttons[m_layout] ~= new TextButton(text, pos_x, pos_y, on_click, on_update);
 	}
-	// void create_mixed_button;
+	void create_tile_button
+	(
+		Tileset tileset, 
+		int graphics_index, 
+		string text,
+		int pos_x, 
+		int pos_y, 
+		void delegate() on_click, 
+		button_state delegate() on_update
+	)
+	{
+		m_buttons[m_layout] ~= new TileButton(tileset, graphics_index, text, pos_x, pos_y, on_click, on_update);
+	}
 	int auto_button_y()
 	{
+		if (m_buttons[m_layout].length == 0)
+		{
+			return (margains * 2) + al_get_font_line_height(Font.font) + (2 * tile_size);
+		}
 		return m_buttons[m_layout][$ - 1].pos_y + m_buttons[m_layout][$ - 1].size_y + m_margains;
 	}
 	int auto_button_x()
@@ -55,6 +77,7 @@ public:
 		auto target = al_get_target_bitmap();
 		al_set_target_bitmap(m_bitmap);
 		al_clear_to_color(al_map_rgb(127, 127, 127));
+		// writeln(m_layout, ": ", m_buttons[m_layout]);
 		foreach (button; m_buttons[m_layout])
 		{
 			button.draw();
@@ -68,13 +91,13 @@ public:
 		// buttons, so no need to run them on the inactive layouts.
 		foreach (button; m_buttons[m_layout])
 		{
-			button.on_update();
+			button.update();
 		}	
 	}
 	// Creates the layout if it doesn't exist.
 	void set_layout(int layout)
 	{
-		if (layout < m_buttons.length)
+		if (layout >= m_buttons.length)
 		{
 			m_buttons.length = layout + 1;
 		}

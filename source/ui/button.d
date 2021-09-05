@@ -14,7 +14,7 @@ enum button_state
 abstract class Button
 {
 public:
-	this(int size_x, int size_y, int pos_x, int pos_y, void delegate() _on_click, void delegate() _on_update)
+	this(int size_x, int size_y, int pos_x, int pos_y, void delegate() _on_click, button_state delegate() _on_update)
 	{
 		on_click = _on_click;
 		on_update = _on_update;
@@ -40,6 +40,10 @@ public:
 	{
 		return m_pos_y;
 	}
+	@property @safe button_state state() const nothrow
+	{
+		return m_state;
+	}
 	void draw();
 	/*{
 		if (m_state != button_state.hidden)
@@ -48,7 +52,11 @@ public:
 		}
 	}*/
 	void delegate() on_click;
-	void delegate() on_update;
+	button_state delegate() on_update;
+	void update()
+	{
+		m_state = on_update();
+	}
 protected:
 	button_state m_state;
 	int m_pos_x;
@@ -60,7 +68,7 @@ protected:
 class TextButton : Button
 {
 public:
-	this(string text, int pos_x, int pos_y, void delegate() on_click, void delegate() on_update)
+	this(string text, int pos_x, int pos_y, void delegate() on_click, button_state delegate() on_update)
 	{
 		immutable auto c_text = text.toStringz;
 		immutable int size_x = al_get_text_width(Font.font, c_text);
@@ -99,25 +107,63 @@ private:
 class TileButton : Button
 {
 public:
-	this(Tileset tileset, int graphics_index, int pos_x, int pos_y, void delegate() on_click, void delegate() on_update)
+	this
+	(
+		Tileset tileset, 
+		int graphics_index, 
+		string text,
+		int pos_x, 
+		int pos_y, 
+		void delegate() on_click, 
+		button_state delegate() on_update
+	)
 	{
 		m_tileset = tileset;
 		m_graphics_index = graphics_index;
 		super(tile_size, tile_size, pos_x, pos_y, on_click, on_update);
+		if (text.length > 0)
+		{
+			has_text = true;
+			immutable auto c_text = text.toStringz;
+			immutable int size_x = al_get_text_width(Font.font, c_text);
+			immutable int size_y = al_get_font_line_height(Font.font);
+			m_active_text = al_create_bitmap(size_x, size_y);
+			m_inactive_text = al_create_bitmap(size_x, size_y);
+			auto draw_target = al_get_target_bitmap();
+			al_set_target_bitmap(m_active_text);
+			al_draw_text(Font.font, al_map_rgb(255, 255, 255), 0, 0, 0, c_text);
+			al_set_target_bitmap(m_inactive_text);
+			al_draw_text(Font.font, al_map_rgb(150, 150, 150), 0, 0, 0, c_text);
+			al_set_target_bitmap(draw_target);
+			m_size_x += size_x;
+			if (m_size_y < size_y) m_size_y = size_y;
+		}
 	}
 	override void draw()
 	{
 		if (m_state != button_state.hidden)
 		{
 			m_tileset.draw_tile(m_graphics_index, pos_x, pos_y);
+
 			if (m_state == button_state.inactive)
 			{
 				// not the prettiest but oh well
-				al_draw_filled_rectangle(pos_x, pos_y, pos_x + tile_size, pos_y + tile_size, al_map_rgba(127, 127, 127, 127));
+				al_draw_filled_rectangle(pos_x, pos_y, pos_x + tile_size, pos_y + tile_size, al_map_rgba(60, 60, 60, 127));
+				if (has_text)
+				{
+					al_draw_bitmap(m_inactive_text, pos_x + tile_size, pos_y, 0);
+				}
+			}
+			else if (has_text)
+			{
+				al_draw_bitmap(m_active_text, pos_x + tile_size, pos_y, 0);
 			}
 		}
 	}
 private:
 	Tileset m_tileset;
 	int m_graphics_index;
+	ALLEGRO_BITMAP* m_active_text;
+	ALLEGRO_BITMAP* m_inactive_text;
+	bool has_text;
 }
