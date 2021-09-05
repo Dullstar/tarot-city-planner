@@ -160,6 +160,13 @@ public:
 		];
 		return RoadCheck!(int[2][8]).check_tiles(to_check);
 	}
+	void update_season()
+	{
+		foreach (obj; objects)
+		{
+			if (obj !is null) obj.update_season();
+		}
+	}
 	Tile cursor;
 	Tileset tileset;
 private:

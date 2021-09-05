@@ -1,6 +1,7 @@
 module ui.ui;
 import allegro5.allegro;
 import ui.button;
+import ui.dynamic_text;
 import controller.mouse_controller;
 import std.stdio;
 import std.conv;
@@ -22,6 +23,7 @@ public:
 		m_bitmap = al_create_bitmap(size_x, size_y);
 		m_layout = 0;
 		m_buttons.length = 1;
+		m_text.length = 1;
 	}
 	~this()
 	{
@@ -60,6 +62,10 @@ public:
 	{
 		m_buttons[m_layout] ~= new TileButton(tileset, graphics_index, text, pos_x, pos_y, on_click, on_update);
 	}
+	void create_dynamic_text(int pos_x, int pos_y, string delegate() on_update)
+	{
+		m_text[m_layout] ~= new DynamicText(pos_x, pos_y, on_update);
+	}
 	int auto_button_y()
 	{
 		if (m_buttons[m_layout].length == 0)
@@ -72,6 +78,14 @@ public:
 	{
 		return m_margains;
 	}
+	int auto_dynamic_text_y()
+	{
+		if (m_text[m_layout].length == 0)
+		{
+			return (margains * 2) + al_get_font_line_height(Font.font) + (2 * tile_size);
+		}
+		return m_text[m_layout][$ - 1].pos_y + al_get_font_line_height(Font.font);
+	}
 	void draw()
 	{
 		auto target = al_get_target_bitmap();
@@ -81,6 +95,10 @@ public:
 		foreach (button; m_buttons[m_layout])
 		{
 			button.draw();
+		}
+		foreach (text; m_text[m_layout])
+		{
+			text.draw();
 		}
 		al_set_target_bitmap(target);
 		al_draw_bitmap(m_bitmap, m_pos_x, m_pos_y, 0);
@@ -93,13 +111,20 @@ public:
 		{
 			button.update();
 		}	
+		foreach (text; m_text[m_layout])
+		{
+			text.update();
+		}
 	}
 	// Creates the layout if it doesn't exist.
 	void set_layout(int layout)
 	{
+		// writeln(m_buttons.length, " == ", m_text.length);
+		assert(m_buttons.length == m_text.length);
 		if (layout >= m_buttons.length)
 		{
 			m_buttons.length = layout + 1;
+			m_text.length = layout + 1;
 		}
 		m_layout = layout;
 	}
@@ -127,6 +152,13 @@ public:
 	{
 		return m_layout;
 	}
+
+	void debug_contents()
+	{
+		writeln("Layout: ", m_layout);
+		writeln("Text: ", m_text);
+		writeln("Buttons: ", m_buttons);
+	}
 private:
 	int m_size_x;
 	int m_size_y;
@@ -136,4 +168,5 @@ private:
 	int m_margains = 8;
 	ALLEGRO_BITMAP* m_bitmap;
 	Button[][] m_buttons;
+	DynamicText[][] m_text;
 }
