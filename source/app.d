@@ -4,6 +4,7 @@ import std.stdio;
 import std.string;
 import allegro5.allegro;
 import allegro5.allegro_image;
+import allegro5.allegro_primitives;
 import allegro5.allegro_font;
 
 import controller;
@@ -194,6 +195,7 @@ int main()
 	return al_run_allegro({
 		initialize(al_init(), "Allegro");
 		initialize(al_init_image_addon(), "Allegro image addon.");
+		initialize(al_init_primitives_addon(), "Allegro primitives addon.");
 		initialize(al_install_keyboard(), "keyboard");
 		initialize(al_install_mouse(), "mouse");
 		initialize(al_init_font_addon(), "Allegro font addon.");
